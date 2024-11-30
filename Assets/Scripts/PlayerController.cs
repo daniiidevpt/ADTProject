@@ -1,10 +1,10 @@
+using System;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
     [Header("Movement Settings")]
     [SerializeField] private float walkSpeed = 5f;
-    [SerializeField] private float rotationSpeed = 720f;
     [SerializeField] private float gravity = -9.81f;
 
     [Header("Ground Check")]
@@ -20,6 +20,9 @@ public class PlayerController : MonoBehaviour
     private float horizontalInput;
     private float verticalInput;
 
+    public event Action<Vector3> OnMove;
+    public event Action OnAttack;
+
     private void Start()
     {
         characterController = GetComponent<CharacterController>();
@@ -28,9 +31,9 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
-        HandleMovement();
         ApplyGravity();
-        UpdateAnimator();
+        HandleMovement();
+        HandleAttack();
     }
 
     private void HandleMovement()
@@ -42,17 +45,19 @@ public class PlayerController : MonoBehaviour
         Vector3 normalizedDirection = moveDirection.normalized;
 
         characterController.Move(normalizedDirection * walkSpeed * Time.deltaTime);
+
+        OnMove?.Invoke(normalizedDirection);
+
+        float velocity = new Vector3(horizontalInput, 0, verticalInput).magnitude;
+        animator.SetFloat("Velocity", velocity);
     }
 
-    private void UpdateAnimator()
+    private void HandleAttack()
     {
-        // Calculate movement speed
-        float horizontalInput = Input.GetAxisRaw("Horizontal");
-        float verticalInput = Input.GetAxisRaw("Vertical");
-        float speed = new Vector3(horizontalInput, 0, verticalInput).magnitude;
-
-        // Set animator parameters
-        animator.SetFloat("Velocity", speed);
+        if (Input.GetButtonDown("Fire1"))
+        {
+            animator.SetTrigger("Attack");
+        }
     }
 
     private void ApplyGravity()
