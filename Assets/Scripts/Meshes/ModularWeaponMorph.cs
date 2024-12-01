@@ -7,6 +7,7 @@ public class ModularWeaponMorph : MonoBehaviour
 {
     public List<WeaponPartMorph> weaponParts = new List<WeaponPartMorph>();
     private Mesh weaponMesh = null;
+    private Mesh weaponCollider = null;
 
     private Vector3[] currentVertices = null;
 
@@ -14,6 +15,7 @@ public class ModularWeaponMorph : MonoBehaviour
     {
         weaponMesh = new Mesh { name = "Modular Weapon" };
         GetComponent<MeshFilter>().mesh = weaponMesh;
+        GetComponent<MeshCollider>().sharedMesh = weaponMesh;
 
         AssembleWeaponFromParts();
 
