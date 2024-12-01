@@ -7,6 +7,14 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float walkSpeed = 5f;
     [SerializeField] private float gravity = -9.81f;
 
+    [Header("Attack Settings")]
+    [SerializeField] private float comboResetTime = 1f;
+    [SerializeField] private float attackCooldown = 0.5f;
+    public bool isAttacking = false;
+    public float comboTimer = 0f;
+    public int comboStage = 0;
+    public float attackCooldownTimer = 0f;
+
     [Header("Ground Check")]
     [SerializeField] private Transform groundCheck;
     [SerializeField] private float groundDistance = 0.4f;
@@ -20,9 +28,6 @@ public class PlayerController : MonoBehaviour
     private float horizontalInput;
     private float verticalInput;
 
-    public event Action<Vector3> OnMove;
-    public event Action OnAttack;
-
     private void Start()
     {
         characterController = GetComponent<CharacterController>();
@@ -31,7 +36,7 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
-        ApplyGravity();
+        HandleGravity();
         HandleMovement();
         HandleAttack();
     }
@@ -46,21 +51,61 @@ public class PlayerController : MonoBehaviour
 
         characterController.Move(normalizedDirection * walkSpeed * Time.deltaTime);
 
-        OnMove?.Invoke(normalizedDirection);
-
         float velocity = new Vector3(horizontalInput, 0, verticalInput).magnitude;
         animator.SetFloat("Velocity", velocity);
     }
 
     private void HandleAttack()
     {
-        if (Input.GetButtonDown("Fire1"))
+        attackCooldownTimer -= Time.deltaTime; // Decrement cooldown timer
+
+        AnimatorStateInfo currentState = animator.GetCurrentAnimatorStateInfo(0);
+
+        // Check for attack input
+        if (Input.GetButtonDown("Fire1") && attackCooldownTimer <= 0)
         {
-            animator.SetTrigger("Attack");
+            if (!isAttacking) // First attack
+            {
+                comboStage = 1;
+                animator.SetTrigger("Attack1");
+                isAttacking = true;
+                comboTimer = comboResetTime; // Start combo timer
+            }
+            else if (comboStage == 1 && currentState.IsName("Attack1") && currentState.normalizedTime >= 0.5f)
+            {
+                // Second attack when the first attack is at least halfway done
+                comboStage = 2;
+                animator.SetTrigger("Attack2");
+                comboTimer = comboResetTime; // Restart combo timer
+            }
+
+            attackCooldownTimer = attackCooldown; // Start cooldown
+        }
+
+        // Check if current animation is finished
+        if (isAttacking && currentState.normalizedTime >= 1.0f)
+        {
+            if (comboStage == 2) // If on the second attack, reset
+            {
+                comboStage = 0;
+                isAttacking = false;
+            }
+        }
+
+        // Reset combo if the timer runs out
+        if (comboTimer > 0)
+        {
+            comboTimer -= Time.deltaTime;
+
+            if (comboTimer <= 0)
+            {
+                comboStage = 0;
+                isAttacking = false;
+            }
         }
     }
 
-    private void ApplyGravity()
+    private void HandleGravity()
     {
         isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
 

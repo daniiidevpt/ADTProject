@@ -3,32 +3,33 @@ using UnityEngine;
 public class CameraController : MonoBehaviour
 {
     [Header("Target Settings")]
-    [SerializeField] private Transform target; // The player or object the camera will orbit
-    [SerializeField] private Vector3 offset = new Vector3(0, 2, -5); // Default camera offset
+    [SerializeField] private Transform target;
+    [SerializeField] private Vector3 offset = new Vector3(0, 2, -5);
 
     [Header("Rotation Settings")]
-    [SerializeField] private float rotationSpeed = 100f; // Speed of camera rotation
-    [SerializeField] private float minVerticalAngle = -30f; // Minimum vertical angle (looking down)
-    [SerializeField] private float maxVerticalAngle = 60f;  // Maximum vertical angle (looking up)
+    [SerializeField] private float rotationSpeed = 100f;
+    [SerializeField] private float minVerticalAngle = -30f;
+    [SerializeField] private float maxVerticalAngle = 60f;
 
     [Header("Zoom Settings")]
-    [SerializeField] private float zoomSpeed = 5f; // Speed of zooming
-    [SerializeField] private float minZoomDistance = 2f; // Minimum zoom distance
-    [SerializeField] private float maxZoomDistance = 10f; // Maximum zoom distance
+    [SerializeField] private float zoomSpeed = 5f;
+    [SerializeField] private float minZoomDistance = 2f;
+    [SerializeField] private float maxZoomDistance = 10f;
 
-    private float currentZoomDistance; // Current distance from the target
-    private float pitch = 0f; // Vertical rotation
-    private float yaw = 0f;   // Horizontal rotation
+    private float currentZoomDistance;
+    private float pitch = 0f;
+    private float yaw = 0f;
 
     private void Start()
     {
-        // Initialize zoom distance based on the offset
         currentZoomDistance = offset.magnitude;
 
-        // Initialize rotation angles
         Vector3 direction = offset.normalized;
         pitch = Mathf.Asin(direction.y) * Mathf.Rad2Deg;
         yaw = Mathf.Atan2(direction.x, -direction.z) * Mathf.Rad2Deg;
+
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
     }
 
     private void LateUpdate()
@@ -52,7 +53,6 @@ public class CameraController : MonoBehaviour
         yaw += mouseX * rotationSpeed * Time.deltaTime;
         pitch -= mouseY * rotationSpeed * Time.deltaTime;
 
-        // Clamp pitch to prevent flipping
         pitch = Mathf.Clamp(pitch, minVerticalAngle, maxVerticalAngle);
     }
 
@@ -65,11 +65,9 @@ public class CameraController : MonoBehaviour
 
     private void UpdateCameraPosition()
     {
-        // Calculate camera offset based on pitch and yaw
         Quaternion rotation = Quaternion.Euler(pitch, yaw, 0);
         Vector3 desiredPosition = target.position - (rotation * Vector3.forward * currentZoomDistance) + Vector3.up * offset.y;
 
-        // Set the camera's position and rotation
         transform.position = desiredPosition;
         transform.LookAt(target.position + Vector3.up * offset.y);
     }
