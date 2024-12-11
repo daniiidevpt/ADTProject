@@ -7,7 +7,6 @@ public class ModularWeaponMorph : MonoBehaviour
 {
     public List<WeaponPartMorph> weaponParts = new List<WeaponPartMorph>();
     private Mesh weaponMesh = null;
-    private Mesh weaponCollider = null;
 
     private Vector3[] currentVertices = null;
 
@@ -19,7 +18,7 @@ public class ModularWeaponMorph : MonoBehaviour
 
         AssembleWeaponFromParts();
 
-        //Invoke("MorphToTarget", 3f);
+        Invoke("MorphToTarget", 3f);
     }
 
     private void AssembleWeaponFromParts()
@@ -86,6 +85,7 @@ public class ModularWeaponMorph : MonoBehaviour
                 if (part.useDynamicMapping)
                 {
                     targetVerticesList.Add(RemappedVertices(part.sourcePart.vertices, part.targetPart.vertices));
+                    //targetVerticesList.Add(RemappedVerticesWithKDTree(part.sourcePart.vertices, part.targetPart.vertices));
                 }
                 else if (part.sourcePart.vertices.Length == part.targetPart.vertices.Length)
                 {
@@ -184,6 +184,21 @@ public class ModularWeaponMorph : MonoBehaviour
         return remapped;
     }
 
+    private Vector3[] RemappedVerticesWithKDTree(Vector3[] sourceVertices, Vector3[] targetVertices)
+    {
+        KDTree<Vector3> kdTree = new KDTree<Vector3>(targetVertices);
+
+        Vector3[] remapped = new Vector3[sourceVertices.Length];
+
+        for (int i = 0; i < sourceVertices.Length; i++)
+        {
+            Vector3 nearestVertex = kdTree.FindNearestNeighbor(sourceVertices[i]);
+            remapped[i] = nearestVertex;
+        }
+
+        return remapped;
+    }
+
     private Bounds GetBounds(Vector3[] vertices)
     {
         Bounds bounds = new Bounds(vertices[0], Vector3.zero);
@@ -255,6 +270,7 @@ public class ModularWeaponMorph : MonoBehaviour
             Vector3[] sourceVertices = part.sourcePart.vertices;
             Vector3[] targetVertices = part.useDynamicMapping ?
                 RemappedVertices(part.sourcePart.vertices, part.targetPart.vertices) 
+                //RemappedVerticesWithKDTree(part.sourcePart.vertices, part.targetPart.vertices)
                 : 
                 part.targetPart.vertices; 
             ;

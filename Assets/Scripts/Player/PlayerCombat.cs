@@ -48,7 +48,6 @@ public class PlayerCombat : MonoBehaviour
 
     public bool IsAttackAnimationPlaying()
     {
-        // External scripts can use this to check if an attack is playing
         AnimatorStateInfo currentState = animator.GetCurrentAnimatorStateInfo(0);
         return currentState.IsName("Attack1") || currentState.IsName("Attack2");
     }

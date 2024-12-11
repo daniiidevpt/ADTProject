@@ -10,30 +10,24 @@ public class GameManager : MonoBehaviour
 
     private float currentFill = 0f; // Current fill amount (0 to 1)
 
-    void Update()
+    private void Update()
     {
-        // Check if space bar is pressed
         if (Input.GetKeyDown(KeyCode.Space))
         {
             IncreaseFill();
         }
     }
 
-    void IncreaseFill()
+    private void IncreaseFill()
     {
-        // Increment the fill amount
         currentFill += fillAmountPerPress;
-
-        // Clamp the fill value to 1 (maximum)
         currentFill = Mathf.Clamp01(currentFill);
 
-        // Update the fillable image
         fillableImage.fillAmount = currentFill;
 
-        // Check if the fill is complete
         if (currentFill >= 1f)
         {
-            onFillComplete?.Invoke(); // Trigger the event
+            onFillComplete?.Invoke();
         }
     }
 }
