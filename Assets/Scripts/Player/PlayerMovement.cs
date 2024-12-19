@@ -3,56 +3,72 @@ using UnityEngine;
 public class PlayerMovement : MonoBehaviour
 {
     [Header("Movement Settings")]
-    [SerializeField] private float walkSpeed = 5f;
-    [SerializeField] private float gravity = -9.81f;
-    [Header("Ground Check")]
-    [SerializeField] private Transform groundCheck;
-    [SerializeField] private float groundDistance = 0.4f;
-    [SerializeField] private LayerMask groundMask;
+    [SerializeField] private float movementSpeed;
 
-    private CharacterController characterController;
-    private Animator animator;
-    private PlayerCombat playerCombat;
+    [Header("Rotation Settings")]
+    [SerializeField] private Transform cameraTransform;
+    [SerializeField] private float rotationSpeed;
 
-    private Vector3 velocity;
-    private float horizontalInput;
-    private float verticalInput;
-
-    public bool CanMove { get; set; } = true;
+    private Rigidbody rb;
+    private Vector3 movementInput;
 
     private void Start()
     {
-        characterController = GetComponent<CharacterController>();
-        animator = GetComponentInChildren<Animator>();
-        playerCombat = GetComponent<PlayerCombat>();
-    }
+        rb = GetComponent<Rigidbody>();
 
-    public void HandleMovement()
-    {
-        if (!CanMove || playerCombat.IsAttackAnimationPlaying()) return;
-
-        horizontalInput = Input.GetAxisRaw("Horizontal");
-        verticalInput = Input.GetAxisRaw("Vertical");
-
-        Vector3 moveDirection = transform.right * horizontalInput + transform.forward * verticalInput;
-        Vector3 normalizedDirection = moveDirection.normalized;
-
-        characterController.Move(normalizedDirection * walkSpeed * Time.deltaTime);
-
-        float velocityMagnitude = new Vector3(horizontalInput, 0, verticalInput).magnitude;
-        animator.SetFloat("Velocity", velocityMagnitude);
-    }
-
-    public void HandleGravity()
-    {
-        bool isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
-
-        if (isGrounded && velocity.y < 0)
+        if (cameraTransform == null)
         {
-            velocity.y = -2f;
+            Debug.LogError("PlayerMovement: CameraTransform is not assigned!");
         }
+    }
 
-        velocity.y += gravity * Time.deltaTime;
-        characterController.Move(velocity * Time.deltaTime);
+    private void Update()
+    {
+        HandleInput();
+    }
+
+    private void FixedUpdate()
+    {
+        HandleMovement();
+        HandleRotation();
+    }
+
+    private void HandleInput()
+    {
+        // Get input for movement
+        float moveX = Input.GetAxisRaw("Horizontal");
+        float moveZ = Input.GetAxisRaw("Vertical");
+
+        // Determine movement direction relative to the camera
+        Vector3 forward = cameraTransform.forward;
+        Vector3 right = cameraTransform.right;
+
+        // Flatten the directions on the Y-axis to prevent unwanted vertical movement
+        forward.y = 0f;
+        right.y = 0f;
+
+        forward.Normalize();
+        right.Normalize();
+
+        movementInput = forward * moveZ + right * moveX;
+    }
+
+    private void HandleMovement()
+    {
+        Vector3 moveForce = movementInput.normalized * movementSpeed;
+        rb.velocity = new Vector3(moveForce.x, rb.velocity.y, moveForce.z);
+    }
+
+    private void HandleRotation()
+    {
+        Vector3 cameraForward = cameraTransform.forward;
+        cameraForward.y = 0f;
+        cameraForward.Normalize();
+
+        if (cameraForward.sqrMagnitude > 0.01f)
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(cameraForward);
+            rb.MoveRotation(targetRotation);
+        }
     }
 }

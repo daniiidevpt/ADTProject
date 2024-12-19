@@ -4,17 +4,23 @@ public class CameraController : MonoBehaviour
 {
     [Header("Target Settings")]
     [SerializeField] private Transform target;
-    [SerializeField] private Vector3 offset = new Vector3(0, 2, -5);
+    [SerializeField] private Transform firstPersonTarget;
+    [SerializeField] private Vector3 thirdPersonOffset = new Vector3(0, 2, -5);
 
     [Header("Rotation Settings")]
-    [SerializeField] private float rotationSpeed = 100f;
-    [SerializeField] private float minVerticalAngle = -30f;
-    [SerializeField] private float maxVerticalAngle = 60f;
+    [SerializeField] private float rotationSpeed;
+    [SerializeField] private float minVerticalAngle;
+    [SerializeField] private float maxVerticalAngle;
+    [SerializeField] private float minVerticalAngleFirstPerson;
+    [SerializeField] private float maxVerticalAngleFirstPerson;
 
     [Header("Zoom Settings")]
-    [SerializeField] private float zoomSpeed = 5f;
-    [SerializeField] private float minZoomDistance = 2f;
-    [SerializeField] private float maxZoomDistance = 10f;
+    [SerializeField] private float zoomSpeed;
+    [SerializeField] private float minZoomDistance;
+    [SerializeField] private float maxZoomDistance;
+
+    [Header("Camera Mode")]
+    [SerializeField] private bool isFirstPerson = false;
 
     private float currentZoomDistance;
     private float pitch = 0f;
@@ -22,9 +28,22 @@ public class CameraController : MonoBehaviour
 
     private void Start()
     {
-        currentZoomDistance = offset.magnitude;
+        if (target == null)
+        {
+            Debug.LogError("CameraController: Target is not assigned in the inspector!");
+            return;
+        }
 
-        Vector3 direction = offset.normalized;
+        if (firstPersonTarget == null && isFirstPerson)
+        {
+            Debug.LogError("CameraController: First Person Target is not assigned in the inspector!");
+            return;
+        }
+
+        currentZoomDistance = thirdPersonOffset.magnitude;
+
+        // Nice calculations
+        Vector3 direction = thirdPersonOffset.normalized;
         pitch = Mathf.Asin(direction.y) * Mathf.Rad2Deg;
         yaw = Mathf.Atan2(direction.x, -direction.z) * Mathf.Rad2Deg;
 
@@ -32,14 +51,55 @@ public class CameraController : MonoBehaviour
         Cursor.lockState = CursorLockMode.Locked;
     }
 
+    private void Update()
+    {
+        // TODO: Remove after demo is finished
+        if (Input.GetKeyDown(KeyCode.V))
+        {
+            isFirstPerson = !isFirstPerson;
+
+            if (isFirstPerson && !firstPersonTarget)
+            {
+                Debug.LogWarning("First Person Target is not assigned! Defaulting to third person.");
+                isFirstPerson = false;
+            }
+        }
+    }
+
     private void LateUpdate()
     {
-        if (target == null)
+        if (isFirstPerson)
         {
-            Debug.LogWarning("CameraController: No target assigned.");
+            HandleFirstPersonView();
+        }
+        else
+        {
+            HandleThirdPersonView();
+        }
+    }
+
+    private void HandleFirstPersonView()
+    {
+        if (firstPersonTarget == null)
+        {
+            Debug.LogWarning("First Person Target is missing. Ensure it's assigned in the inspector.");
             return;
         }
 
+        float mouseX = Input.GetAxis("Mouse X");
+        float mouseY = Input.GetAxis("Mouse Y");
+
+        yaw += mouseX * rotationSpeed * Time.deltaTime;
+        pitch -= mouseY * rotationSpeed * Time.deltaTime;
+
+        pitch = Mathf.Clamp(pitch, minVerticalAngleFirstPerson, maxVerticalAngleFirstPerson);
+
+        transform.position = firstPersonTarget.position;
+        transform.rotation = Quaternion.Euler(pitch, yaw, 0);
+    }
+
+    private void HandleThirdPersonView()
+    {
         HandleRotation();
         HandleZoom();
         UpdateCameraPosition();
@@ -66,9 +126,9 @@ public class CameraController : MonoBehaviour
     private void UpdateCameraPosition()
     {
         Quaternion rotation = Quaternion.Euler(pitch, yaw, 0);
-        Vector3 desiredPosition = target.position - (rotation * Vector3.forward * currentZoomDistance) + Vector3.up * offset.y;
+        Vector3 desiredPosition = target.position - (rotation * Vector3.forward * currentZoomDistance) + Vector3.up * thirdPersonOffset.y;
 
         transform.position = desiredPosition;
-        transform.LookAt(target.position + Vector3.up * offset.y);
+        transform.LookAt(target.position + Vector3.up * thirdPersonOffset.y);
     }
 }

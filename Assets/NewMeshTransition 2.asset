@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9ea4cee51a707ac40b6706e2a6401d2f, type: 3}
+  m_Name: NewMeshTransition 2
+  m_EditorClassIdentifier: 
+  startMesh: {fileID: -1494979283964770390, guid: 54948ecf217d8bb4b8070ebdd40c9640, type: 3}
+  intermediateMesh: {fileID: -5519330399866076026, guid: de2c2d5be6077a140a3dbd6c4d0813ae, type: 3}
+  finalMesh: {fileID: -5026261904823374329, guid: ed7681b97764fa74aa270cd2f6de8937, type: 3}
